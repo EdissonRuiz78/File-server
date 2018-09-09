@@ -1,6 +1,8 @@
-
 import zmq
 import sys
+import json
+import os
+import os.path
 
 def main():
     if len(sys.argv) != 4:
@@ -11,6 +13,12 @@ def main():
     clientsAddress = sys.argv[1]
     serversFolder = sys.argv[3]
     clientsAddress = clientsAddress + ":" + clientsPort
+
+    path = "{}".format(serversFolder)
+    if not os.path.exists(path):
+        os.makedirs(path)
+    else:
+        print("BE CAREFUL! Directory {} already exists.".format(path))
 
     context = zmq.Context()
     proxy = context.socket(zmq.REQ)
@@ -35,14 +43,54 @@ def main():
             print("Uploaded as {}".format(filename))
 
         elif operation == b"Index":
-            filename, username, message = rest
-            index = open("server/{}_{}.txt".format(username.decode("ascii"), filename.decode("ascii")), "wb")
+            completeSha1, message = rest
+            index = open("{}{}.txt".format(serversFolder, completeSha1.decode("ascii")), "wb")
             index.write(message)
             index.close()
+        
+        elif operation == b"Down":
+            SHA, IP = rest
+            ip = IP.decode("ascii")
+            sha = SHA.decode("ascii")
+
+            archivos = os.listdir("{}".format(serversFolder))
+            for i in range (len(archivos)):
+                if archivos[i] == "{}.txt".format(sha):
+                    while True:
+                        f = open("{}{}.txt".format(serversFolder, completeSha1.decode("ascii")), "rb")
+                        content = f.read(1024)
+                        while content:
+                            clients.send(content)
+                            content = f.read(1024)
+                            clients.recv()
+                        break
+                        f.close()
+                else:
+                    pass
+        
+        elif operation == b"Parts":
+            shas, filename = rest
+            sha = shas.decode("ascii")
+            archivos = os.listdir("{}".format(serversFolder))
+            for i in range (len(archivos)):
+                if archivos[i] == "{}".format(sha):
+                    while True:
+                        f = open("{}{}".format(serversFolder, sha), "rb")
+                        content = f.read(1024*1024*10)
+
+                        while content:
+                            clients.send(content)
+                            content = f.read(1024*1024*10)
+                            clients.recv()
+                        break
+                        f.close()
+                else:
+                    pass
 
         else:
             print("Unsupported operation: {}".format(operation))
-        clients.send(b"Done")
+
+        clients.send(b"DONE")
 
 if __name__ == '__main__':
     main()

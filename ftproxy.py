@@ -1,10 +1,13 @@
 import zmq
+import json
 
 def main():
     # Address for each server to receive files
     servAddresses = []
-    names = []
-
+    values = []
+    keys_shas = {}
+    keys_servers = {}
+    
     context = zmq.Context()
     servers = context.socket(zmq.REP)
     servers.bind("tcp://*:5555")
@@ -24,33 +27,52 @@ def main():
 
             if operation == b"availableServers":
                 clients.send_multipart(servAddresses)
-            print("Done")
+            
+            elif operation == b"List":
+                username, filename, add, CompleteSha = msg
+                name = username.decode("ascii")
+                files = filename.decode("ascii")
+                key = name+files
+                addr = add.decode("ascii")
+                Sha1 = CompleteSha.decode("ascii")
 
-            if operation == b"List":
-                username, filename, add = msg
-                key = username+filename
-                print(key, add)
-                #names.append(username.decode("ascii"))
-                #names.append([sha1.decode("ascii"), add.decode("ascii")])
+                keys_servers = {"{}".format(key): [addr, Sha1]}
                 clients.send(b"DONE--")
-            #print("------------{}".format(names))
+            
+            elif operation == b"List key":
+                CompleteSha, sha, add = msg
+                key = CompleteSha.decode("ascii")
+                sha1 = sha.decode("ascii")
+                addr = add.decode("ascii")
 
+                values.append([addr,sha1])                                                                                             
+                keys_shas = {"{}".format(key): values} 
+                clients.send(b"OK")
 
-            if operation == b"download":
-                clients.send_multipart(servAddresses)
-
-                #filename = msg
-                #print(filename)
-                #while True:
-                #    f = open("proxy/index_{}.txt".format(filename.decode("ascii")), "rb")
-                #    content = f.read(1024)
-
-                #    while content:
-                 #       clients.send_multipart([servAddresses, content])
-                  #      content = f.read(1024)
-                   # break
-                    #f.close()
-
+            elif operation == b"download":
+                username, filename = msg
+                name = username.decode("ascii")
+                files = filename.decode("ascii")
+                key = name+files
+                values = keys_servers.get(key)
+                data = json.dumps(values)
+                clients.send(data.encode())
+            
+            elif operation == b"download-keys":
+                SHA, filename = msg
+                values = keys_shas.get(SHA.decode("ascii"))
+                data = json.dumps(values)
+                clients.send(data.encode())
+            
+            elif operation == b"share":
+                username, filename = msg
+                name = username.decode("ascii")
+                files = filename.decode("ascii")
+                key = name+files
+                values = keys_servers.get(key)
+                data = json.dumps(keys_servers)
+                clients.send(data.encode())
+        
         if servers in socks:
             print("Message from server")
             operation, *rest = servers.recv_multipart()
@@ -58,7 +80,6 @@ def main():
                 servAddresses.append(rest[0])
                 print(servAddresses)
                 servers.send(b"Ok")
-
 
 if __name__ == '__main__':
     main()
