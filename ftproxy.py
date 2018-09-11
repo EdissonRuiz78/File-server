@@ -37,7 +37,8 @@ def main():
                 addr = add.decode("ascii")
                 Sha1 = CompleteSha.decode("ascii")
 
-                keys_servers = {"{}".format(key): [addr, Sha1]}
+                keys_servers["{}".format(key)] = [addr, Sha1]
+                print(keys_servers)
                 clients.send(b"DONE--")
             
             elif operation == b"List key":
