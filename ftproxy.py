@@ -5,6 +5,7 @@ def main():
     # Address for each server to receive files
     servAddresses = []
     values = []
+    list_keys = []
     keys_shas = {}
     keys_servers = {}
     
@@ -40,13 +41,19 @@ def main():
                 clients.send(b"DONE--")
             
             elif operation == b"List key":
-                CompleteSha, sha, add = msg
+                CompleteSha, sha, add, part = msg
                 key = CompleteSha.decode("ascii")
                 sha1 = sha.decode("ascii")
                 addr = add.decode("ascii")
-
-                values.append([addr,sha1])                                                                                             
-                keys_shas = {"{}".format(key): values} 
+                parts = int(part.decode("ascii"))
+                
+                if parts == 0:
+                    values = []
+            
+                values.append([addr, sha1])
+                keys_shas["{}".format(key)] = values
+                           
+                print(keys_shas)                
                 clients.send(b"OK")
 
             elif operation == b"download":
@@ -55,12 +62,14 @@ def main():
                 files = filename.decode("ascii")
                 key = name+files
                 values = keys_servers.get(key)
+                print(values)
                 data = json.dumps(values)
                 clients.send(data.encode())
             
             elif operation == b"download-keys":
                 SHA, filename = msg
                 values = keys_shas.get(SHA.decode("ascii"))
+                print(values)
                 data = json.dumps(values)
                 clients.send(data.encode())
             

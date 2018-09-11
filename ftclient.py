@@ -53,7 +53,7 @@ def uploadFile(context, filename, servers, username):
             indice.write("\n")
             indice.close()
             add = servers[part%len(sockets)]
-            proxy.send_multipart([b"List key", completeSha1, sha1bt, add])
+            proxy.send_multipart([b"List key", completeSha1, sha1bt, add, bytes(str(part), ("ascii"))])
             proxy.recv()  
             print("Received reply for part {} ".format(part))
             part = part + 1
@@ -73,6 +73,7 @@ def uploadFile(context, filename, servers, username):
                 content = f.read(1024)
             break
             f.close()
+    os.remove("client/{}.txt".format(completeSha1.decode("ascii")))
 
 def Download(context, values, filename):
     context = zmq.Context()
@@ -96,6 +97,7 @@ def Download(context, values, filename):
     proxy.send_multipart([b"download-keys", bytes(SHA, ("ascii")), filename])
     shas = proxy.recv(1024)
     shas = json.loads(shas.decode())
+    print(shas)
     
     for i in range(len(shas)):
         server = context.socket(zmq.REQ)
@@ -144,6 +146,7 @@ def main():
         proxy.send_multipart([b"download", bytes(username, "ascii"), filename])
         shas = proxy.recv(1024)
         shas = json.loads(shas.decode())
+        print(shas)
         Download(context, shas, filename)
         print("File {} downloaded".format(filename.decode("ascii")))
 
