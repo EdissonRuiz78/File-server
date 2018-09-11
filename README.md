@@ -20,10 +20,10 @@ El cliente indica la cancion que desea compartir, el proxy le responde al client
 
 Como ejecutarlo desde terminal      
 
-Cliente: python ftclient.py username operation filename
+Cliente: python     ftclient.py     username    operation   filename
 
-Proxy: python ftproxy.py
+Proxy: python   ftproxy.py
 
-Servidor: python ftserver.py address port folder
+Servidor: python    ftserver.py     address     port    folder
     
      
