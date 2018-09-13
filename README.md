@@ -18,6 +18,10 @@ Funcion share
 
 El cliente indica la cancion que desea compartir, el proxy le responde al cliente con una llave unica de archivo con la cual puede descargar el archivo
 
+Funcion d-share
+
+El cliente indica una llave unica de archivo y puede descargarlo desde los servidores donde se encuentra almacenado.
+
 Como ejecutarlo desde terminal      
 
 Cliente: python     ftclient.py     username    operation   filename
