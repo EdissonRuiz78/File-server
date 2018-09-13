@@ -82,6 +82,16 @@ def main():
                 values = keys_servers.get(key)
                 data = json.dumps(keys_servers)
                 clients.send(data.encode())
+            
+            elif operation == b"dshare":
+                username, filename = msg
+                name = username.decode("ascii")
+                key = filename.decode("ascii")
+                print(key)
+                values = keys_shas.get(key)
+                print(values)
+                data = json.dumps(values)
+                clients.send(data.encode())
         
         if servers in socks:
             print("Message from server")

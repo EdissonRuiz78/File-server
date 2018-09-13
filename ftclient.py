@@ -115,6 +115,17 @@ def Share(context, shas, username, filename):
     print("This is the key for you archive: {}".format(values[1]))
     #Download(context, values, filename)
 
+def dShare(context, shas, filename):
+    for i in range(len(shas)):
+        server = context.socket(zmq.REQ)
+        server.connect("tcp://{}".format(shas[i][0]))
+        server.send_multipart([b"Parts", bytes(shas[i][1], ("ascii")), filename])
+        message = server.recv()
+        index = open("client/down-{}".format(filename.decode("ascii")), "ab")
+        index.write(message)
+        index.close()
+        server.send(b"DONE")
+
 def main():
     if len(sys.argv) != 4:
         print("Must be called with a filename")
@@ -129,7 +140,7 @@ def main():
         os.makedirs(path)
     else:
         pass
-        
+    
     context = zmq.Context()
     proxy = context.socket(zmq.REQ)
     proxy.connect("tcp://localhost:6666")
@@ -155,6 +166,14 @@ def main():
         shas = proxy.recv(1024)
         shas = json.loads(shas.decode())
         Share(context, shas, username, filename)
+    
+    elif operation == "d-share":
+        proxy.send_multipart([b"dshare",  bytes(username, ("ascii")), filename])
+        shas = proxy.recv(1024)
+        shas = json.loads(shas.decode())
+        print(shas)
+        dShare(context, shas, filename)
+        print("File downloaded")
         
     else:
         print("Operation not found!!!")
